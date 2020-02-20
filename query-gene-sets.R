@@ -24,8 +24,8 @@ ko.mm <- read.table("geo-mm-ko-gene-sets.tsv", sep = "\t", header = T, stringsAs
 listDatasets <- function(sig.only = FALSE, pos.only = FALSE, by.dataset = TRUE){
   
   disease.hs %>%
-    filter(if (pos.only) log2fc > 0 else is.numeric(log2fc)) %>%
-    filter(if (sig.only) fdr < 0.05 else is.numeric(fdr)) %>%
+    dplyr::filter(if (pos.only) log2fc > 0 else is.numeric(log2fc)) %>%
+    dplyr::filter(if (sig.only) fdr < 0.05 else is.numeric(fdr)) %>%
     group_by(dataset_annot) %>%
     {if (by.dataset) count(., dataset_id, name = "unique_genes")
       else summarise(., unqiue_genes = n_distinct(symbol))
@@ -51,8 +51,8 @@ genesByDataset <- function(dataset.id = NULL, sig.only = FALSE, pos.only = FALSE
   }
   
   disease.hs %>%
-    filter(dataset_id == dataset.id) %>%
-    filter(if (pos.only) log2fc > 0 else is.numeric(log2fc)) %>%
-    filter(if (sig.only) fdr < 0.05 else is.numeric(fdr)) %>%
-    select(symbol, log2fc, pv, fdr)
+    dplyr::filter(dataset_id == dataset.id) %>%
+    dplyr::filter(if (pos.only) log2fc > 0 else is.numeric(log2fc)) %>%
+    dplyr::filter(if (sig.only) fdr < 0.05 else is.numeric(fdr)) %>%
+    dplyr::select(symbol, log2fc, pv, fdr)
 }

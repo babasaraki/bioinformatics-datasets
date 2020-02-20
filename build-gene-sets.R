@@ -24,8 +24,8 @@ lapply(dir.list, function(d){
     data <- read.table(file.path(d, fn) , header = T, sep = "\t", stringsAsFactors = F)
     this.data <- data %>%
       arrange(desc(logFC)) %>%
-      filter(!Gene.symbol == "" & P.Value < 0.05) %>%
-      select(Gene.symbol, logFC, P.Value, adj.P.Val) %>%
+      dplyr::filter(!Gene.symbol == "" & P.Value < 0.05) %>%
+      dplyr::select(Gene.symbol, logFC, P.Value, adj.P.Val) %>%
       set_colnames(c("symbol", "log2fc", "pv", "fdr"))
     this.data$dataset_id = id
     this.data$dataset_annot = annot
