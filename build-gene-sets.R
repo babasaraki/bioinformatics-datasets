@@ -1,4 +1,4 @@
-# public gene sets 
+# build gene sets from public data
 
 library(dplyr)
 library(magrittr)
