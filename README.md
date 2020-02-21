@@ -5,12 +5,13 @@ Note: The PDF Supplemental tables provide an annotated list of GEO datasets for 
 
 ## GEO Protocol
 1. Go to https://www.ncbi.nlm.nih.gov/geo/geo2r/?acc=GSE22873. Replace GEO ID.
-2. Expand Samples
-3. Define two groups, e.g., cancer/normal or ko/wt
-4. Assign samples to groups
-5. Click on Top 250
-6. Click on Save all results
-7. Save as TSV into appropriate subfolder
+1. Expand Samples
+1. Define two groups, e.g., cancer/normal or ko/wt
+1. Assign samples to groups
+1. Click on Top 250
+1. Confirm directionality, i.e., gene with increased expression in cancer vs normal should have a positive log2FC.
+1. Click on Save all results
+1. Save as TSV into appropriate subfolder
 
 ## Compiling datasets
 Run `build-gene-sets.R` to generate a top-level TSV file compiled from each subfolder of collected datasets.
