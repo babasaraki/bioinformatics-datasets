@@ -1,9 +1,9 @@
 # analyze gene sets 
 
 ## CONFIG VARS
-n_genes_threshold = 600
+n_genes_threshold = 400
 dataset_source = "har" #geo or har
-pos_only = FALSE
+pos_only = TRUE
 string = TRUE
 
 ## Libs
@@ -59,6 +59,12 @@ res.cnts <- data.frame(set = character(0),
                       genes = integer(0),
                       wp_pathways = integer(0)
 ) 
+
+# Clear prior results
+res.wp.files <- list.files(file.path("_results",dataset_source), pattern=".*wp\\.csv")
+lapply(res.wp.files, function(fn){
+  file.remove(file.path("_results",dataset_source,fn))
+})
 
 # Loop
 lapply(dataset.names, function(d){
@@ -168,7 +174,7 @@ library(pheatmap)
 # (optional) use filter by sum to reduce complexity of result display
 res.mat.log <- res.mat[,3:ncol(res.mat)] %>%
   mutate_all(log10) %>%
-  replace(is.na(.), 2) %>% ## workaround for NA error
+  replace(is.na(.), 20) %>% ## workaround for NA error
   mutate_if(is.numeric, funs(-.)) %>%
   mutate(sum = rowSums(.)) %>%
   magrittr::set_rownames(res.mat[,2]) %>%
