@@ -1,8 +1,10 @@
 # analyze gene sets 
 
 ## CONFIG VARS
-n_genes_threshold = 400
+n_genes_threshold = 600
 dataset_source = "har" #geo or har
+pos_only = FALSE
+string = TRUE
 
 ## Libs
 load.libs <- c(
@@ -47,8 +49,8 @@ wpid2name <- wpid2name %>%
   mutate(name = substr(name, 1,60))
 
 # Prep datasets
-dataset.df <- {if(dataset_source == "geo") listGeoSets(T,T) 
-  else if(dataset_source == "har") listHarmonizomeSets(T) } %>%
+dataset.df <- {if(dataset_source == "geo") listGeoSets(T,pos_only) 
+  else if(dataset_source == "har") listHarmonizomeSets(pos_only) } %>%
   dplyr::filter(unique_genes >= n_genes_threshold)
 dataset.names <- paste(dataset.df$dataset_id, dataset.df$dataset_annot, sep = "__")
   
@@ -65,14 +67,28 @@ lapply(dataset.names, function(d){
   ### get gene set
   d.genes <- {if(dataset_source == "geo") genesByGeoSet(d.id, T, T) 
     else if(dataset_source == "har") genesByHarmonizomeSet(d.id, T) } 
-  d.gene.list <- na.omit(unique(d.genes$symbol[1:n_genes_threshold]))
+  d.gene.list <- na.omit(unique(d.genes$symbol))
   d.gene.list.entrez <- bitr(d.gene.list, fromType = "SYMBOL",
-                                   toType = c("ENTREZID"),
-                                   OrgDb = org.Hs.eg.db)
+                             toType = c("ENTREZID"),
+                             OrgDb = org.Hs.eg.db)
+
+  ### STRING network
+  if(string){
+    library(RCy3)
+    commandsRun(paste0('string protein query query="',paste(d.gene.list.entrez[,1],collapse = ","),
+                       '" limit=0 cutoff=0.4'))
+    createSubnetwork(edges = "all")
+    net.gene.list <- getTableColumns(columns="query term")[,1]
+    d.gene.list.entrez <- dplyr::filter(d.gene.list.entrez, SYMBOL %in% net.gene.list)
+  }
+  
+  ## Filter and subset
+  ewp.genes <- na.omit(d.gene.list.entrez$ENTREZID[1:n_genes_threshold])
+    
   
   ### WikiPathways Analysis
   ewp <- clusterProfiler::enricher(
-    d.gene.list.entrez[,2],
+    ewp.genes,
     pAdjustMethod = "fdr",
     pvalueCutoff = 0.05, #p.adjust cutoff
     minGSSize = 5,
@@ -152,7 +168,7 @@ library(pheatmap)
 # (optional) use filter by sum to reduce complexity of result display
 res.mat.log <- res.mat[,3:ncol(res.mat)] %>%
   mutate_all(log10) %>%
-  replace(is.na(.), 0) %>% ## workaround for NA error
+  replace(is.na(.), 2) %>% ## workaround for NA error
   mutate_if(is.numeric, funs(-.)) %>%
   mutate(sum = rowSums(.)) %>%
   magrittr::set_rownames(res.mat[,2]) %>%
@@ -164,7 +180,7 @@ res.mat.log <- res.mat[,3:ncol(res.mat)] %>%
 wp.heat <- as.matrix(res.mat.log)
 
 # proportionally set font sizes
-fontsize_row = 14 - nrow(wp.heat) / 15
+fontsize_row = 14 - nrow(wp.heat) / 25
 fontsize_col = 14 - ncol(wp.heat) / 15
 
 # plot
