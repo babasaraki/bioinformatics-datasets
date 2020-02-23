@@ -1,5 +1,9 @@
 # analyze gene sets 
 
+## CONFIG VARS
+n_genes_threshold = 400
+dataset_source = "har" #geo or har
+
 ## Libs
 load.libs <- c(
   "DOSE",
@@ -43,8 +47,8 @@ wpid2name <- wpid2name %>%
   mutate(name = substr(name, 1,60))
 
 # Prep datasets
-n_genes_threshold = 400
-dataset.df <- listDatasets(T,T) %>%
+dataset.df <- {if(dataset_source == "geo") listGeoSets(T,T) 
+  else if(dataset_source == "har") listHarmonizomeSets(T) } %>%
   dplyr::filter(unique_genes >= n_genes_threshold)
 dataset.names <- paste(dataset.df$dataset_id, dataset.df$dataset_annot, sep = "__")
   
@@ -59,7 +63,8 @@ lapply(dataset.names, function(d){
   d.id <- strsplit(d, "__")[[1]][1]
   
   ### get gene set
-  d.genes <- genesByDataset(d.id, T,T)
+  d.genes <- {if(dataset_source == "geo") genesByGeoSet(d.id, T, T) 
+    else if(dataset_source == "har") genesByHarmonizomeSet(d.id, T) } 
   d.gene.list <- na.omit(unique(d.genes$symbol[1:n_genes_threshold]))
   d.gene.list.entrez <- bitr(d.gene.list, fromType = "SYMBOL",
                                    toType = c("ENTREZID"),
@@ -101,7 +106,7 @@ lapply(dataset.names, function(d){
   # dev.off()
   
   ### saves
-  write.csv(ewp, file = paste0("_results/",d,"__wp.csv"), row.names = F)
+  write.csv(ewp, file = file.path("_results", dataset_source,paste(d,"wp.csv",sep="__")), row.names = F)
   wp.cnt <- nrow(ewp)
   
   ## Summary objects
@@ -110,21 +115,21 @@ lapply(dataset.names, function(d){
                          wp_pathways = wp.cnt
   )
   res.cnts <<- rbind(res.cnts, this.cnt)
-  write.csv(res.cnts, "_results/summary_counts.csv", row.names = F)
+  write.csv(res.cnts, file.path("_results", dataset_source,"summary_counts.csv"), row.names = F)
 })
 
 
 
 ## Summarize
 # collect pathway results in useful objects for plotting
-res.wp.files <- list.files("_results", pattern=".*wp\\.csv")
+res.wp.files <- list.files(file.path("_results",dataset_source), pattern=".*wp\\.csv")
 
 res.mat <- data.frame(ID = character(), Title = character()) #for heatmap
 
 lapply(res.wp.files, function(r.file) { 
   res.name <- unlist(strsplit(r.file, "__wp"))[1]
   
-  res <- read.csv(file.path("_results", r.file), stringsAsFactors = F)
+  res <- read.csv(file.path("_results",dataset_source, r.file), stringsAsFactors = F)
   this.res <- res %>%
     dplyr::filter(p.adjust < 0.05) %>%
     dplyr::select(ID, Description, p.adjust) %>%
