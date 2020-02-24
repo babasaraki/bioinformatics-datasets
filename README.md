@@ -27,4 +27,6 @@ Note: The PDF Supplemental tables provide an annotated list of GEO datasets for 
 * Source 'query-gene-sets.R` to access functions to extract gene sets and associated data values per dataset.
   - `listGeoSets(T)` will summarize the unique DE genes with FDR < 0.5 per dataset per disease
   - `genesByGeoSet("GSE6357", T, T)` will return a dataframe of DE genes with FDR < 0.05 and log2FC > 0
+  - `listHarmonizomeSets()` will summarize unique DE genes with P-values < 0.5 per dataset per disease, providing a standardizedValue, "sv", from Harmonizome equal to -log10(p-value) * sign(log2FC).
+  - `genesByHarmonizomeSet("GSE3467", T)` will return a dataframe of DE genes with sv > 0.
 
